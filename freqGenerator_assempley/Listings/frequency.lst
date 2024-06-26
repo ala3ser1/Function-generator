@@ -1,0 +1,262 @@
+A51 MACRO ASSEMBLER  FREQUENCY                                                            03/19/2024 14:54:02 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\frequency.obj
+ASSEMBLER INVOKED BY: C:\Keil_v5\C51\BIN\A51.EXE frequency.a51 SET(SMALL) DEBUG PRINT(.\Listings\frequency.lst) OBJECT(.
+                      \Objects\frequency.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+  0090                 1     KEYPAD_PORT EQU P1
+  00A0                 2             ADC EQU P2
+  0090                 3     C1  BIT P1.0
+  0091                 4     C2  BIT P1.1
+  0092                 5     C3  BIT P1.2
+  0093                 6     C4  BIT P1.3
+  0094                 7     RO4 BIT P1.4
+  0095                 8     RO3 BIT P1.5
+  0096                 9     RO2 BIT P1.6
+  0097                10     RO1 BIT P1.7
+  0080                11     LCD_PORT EQU P0
+  00B0                12     Rs BIT P3.0
+  00B1                13     E BIT P3.1
+                      14     
+0000                  15     ORG 00H
+0000 7590FF           16     MOV KEYPAD_PORT,#0FFH           
+                      17     
+                      18     
+0003 758902           19     MOV TMOD,#2H
+0006 758C00           20     MOV TH0,#0
+                      21     
+0009                  22     HERE:                
+0009 1200B3           23     LCALL LCD_INIT
+                      24     ;MOV A,#0C0H   
+                      25     ;LCALL LCD_COMMAND
+000C 900116           26     MOV DPTR,#TRIANGLE
+000F                  27     FREQ:
+000F 780C             28     MOV R0,#12
+0011                  29     LOOP:
+0011 E8               30     MOV A,R0
+0012 93               31     MOVC A,@A+DPTR
+0013 F5A0             32     MOV ADC,A
+0015 D28C             33     SETB TR0
+0017 308DFD           34     H:JNB TF0,H
+001A C28D             35     CLR TF0
+001C C28C             36     CLR TR0
+001E D8F1             37     DJNZ R0,LOOP
+0020 80ED             38     SJMP FREQ
+                      39     
+                      40     
+0022                  41     READ_KEY:
+0022                  42     CHECK_1:                                        
+0022 C297             43     CLR RO1
+0024 C296             44     CLR RO2
+0026 C295             45     CLR RO3
+0028 C294             46     CLR RO4
+                      47     
+002A E590             48     MOV A,KEYPAD_PORT
+002C 540F             49     ANL A,#0FH
+002E B40FF1           50     CJNE A,#0FH,CHECK_1                               
+0031                  51     CHECK_2:                                       
+0031 11D6             52     ACALL DELAY                                     
+0033 E590             53     MOV A,KEYPAD_PORT
+0035 540F             54     ANL A,#0FH
+0037 B40F02           55     CJNE A,#0FH,CHECK_ROW
+003A 80E6             56     SJMP CHECK_1                                   
+003C                  57     CHECK_ROW:                                      
+A51 MACRO ASSEMBLER  FREQUENCY                                                            03/19/2024 14:54:02 PAGE     2
+
+003C C297             58     CLR RO1
+003E D296             59     SETB RO2
+0040 D295             60     SETB RO3
+0042 D294             61     SETB RO4
+0044 E590             62     MOV A,KEYPAD_PORT
+0046 B47F2A           63     CJNE A,#01111111B,ROW_1
+0049 D297             64     SETB RO1
+004B C296             65     CLR RO2
+004D D295             66     SETB RO3
+004F D294             67     SETB RO4
+0051 E590             68     MOV A,KEYPAD_PORT
+0053 B4BF22           69     CJNE A,#10111111B,ROW_2
+0056 D297             70     SETB RO1
+0058 D296             71     SETB RO2
+005A C295             72     CLR RO3
+005C D294             73     SETB RO4
+005E E590             74     MOV A,KEYPAD_PORT
+0060 B4DF1A           75     CJNE A,#11011111B,ROW_3
+0063 D297             76     SETB RO1
+0065 D296             77     SETB RO2
+0067 D295             78     SETB RO3
+0069 C294             79     CLR RO4
+006B E590             80     MOV A,KEYPAD_PORT
+006D B4EF12           81     CJNE A,#11101111B,ROW_4
+0070 020022           82     LJMP CHECK_1
+0073                  83     ROW_1:                                          
+0073 9000DF           84     MOV DPTR,#ROW1
+0076 800F             85     SJMP FIND
+0078                  86     ROW_2:
+0078 9000E3           87     MOV DPTR,#ROW2
+007B 800A             88     SJMP FIND
+007D                  89     ROW_3:
+007D 9000E7           90     MOV DPTR,#ROW3
+0080 8005             91     SJMP FIND
+0082                  92     ROW_4:
+0082 9000EB           93     MOV DPTR,#ROW4
+0085 8000             94     SJMP FIND
+0087                  95     FIND: 
+0087 7A04             96     MOV R2,#4                                       ;FIND IN WHICH COLUMN THE PRESSED BUTTON IS
+0089 13               97     RRC A
+008A 5005             98     JNC MATCH
+008C A3               99     INC DPTR
+008D DAF8            100     DJNZ R2, FIND
+008F 8091            101     SJMP READ_KEY
+0091                 102     MATCH:                                         
+0091 E4              103     CLR A
+0092 93              104     MOVC A,@A+DPTR
+0093 B44306          105     CJNE A,#'C',PPO
+0096 1200B3          106     LCALL LCD_INIT
+0099 020009          107     LJMP HERE                                      
+009C                 108     PPO:                                          
+009C 22              109     RET
+009D                 110     ERROR:                                         
+009D 1200B3          111     LCALL LCD_INIT
+00A0 900123          112     MOV DPTR,#ERR
+00A3                 113     AGAIN_2:
+00A3 E4              114     CLR A
+00A4 93              115     MOVC A,@A+DPTR
+00A5 6006            116     JZ HOO
+00A7 1200CB          117     LCALL LCD_DATA
+00AA A3              118     INC DPTR
+00AB 80F6            119     SJMP AGAIN_2
+00AD                 120     HOO:
+00AD 120022          121     LCALL READ_KEY 
+00B0 020009          122     LJMP HERE                                               
+                     123     
+A51 MACRO ASSEMBLER  FREQUENCY                                                            03/19/2024 14:54:02 PAGE     3
+
+                     124     
+00B3                 125     LCD_INIT:
+00B3 7438            126     MOV A,#38H                                     
+00B5 11C0            127     ACALL LCD_COMMAND
+00B7 740E            128     MOV A,#0EH                                     
+00B9 11C0            129     ACALL LCD_COMMAND
+00BB 7401            130     MOV A,#01H                                     
+00BD 11C0            131     ACALL LCD_COMMAND
+00BF 22              132     RET
+                     133     
+00C0                 134     LCD_COMMAND:                                    ;APPLY A COMMAND TO THE LCD
+00C0 F580            135     MOV LCD_PORT,A
+00C2 C2B0            136     CLR Rs
+00C4 D2B1            137     SETB E
+00C6 C2B1            138     CLR E
+00C8 11D6            139     ACALL DELAY
+00CA 22              140     RET
+                     141     
+00CB                 142     LCD_DATA:                                      
+00CB F580            143     MOV LCD_PORT,A
+00CD D2B0            144     SETB Rs
+00CF D2B1            145     SETB E
+00D1 C2B1            146     CLR E
+00D3 11D6            147     ACALL DELAY
+00D5 22              148     RET
+                     149     
+00D6                 150     DELAY:                                         
+00D6 7B64            151     MOV R3,#100
+00D8 7AC8            152     LOOP2: MOV R2,#200
+00DA DAFE            153     LOOP1: DJNZ R2,LOOP1
+00DC DBFA            154     DJNZ R3,LOOP2
+00DE 22              155     RET
+                     156                                    ;KEYBOARD BUTTONS
+00DF 3738394B        157     ROW1: DB '7','8','9','K'
+00E3 3435362A        158     ROW2: DB '4','5','6','*'
+00E7 3132332D        159     ROW3: DB '1','2','3','-'
+00EB 43303D2B        160     ROW4: DB 'C','0','=','+'
+                     161     
+00EF 0080C0EE        162     SIN:    DB 0,128,192,238,255,238,192,128,64,17,0,17,64
+00F3 FFEEC080                
+00F7 40110011                
+00FB 40                      
+00FC 00FFFFFF        163     SQUARE: DB 0,255,255,255,255,255,255,0,0,0,0,0,0
+0100 FFFFFF00                
+0104 00000000                
+0108 00                      
+0109 00FFE8D1        164     STAIRS: DB 0,255,232,209,186,163,140,117,94,71,48,24,0
+010D BAA38C75                
+0111 5E473018                
+0115 00                      
+0116 00002A54        165     TRIANGLE:DB 0,0,42,84,126,168,211,255,211,168,126,84,42
+011A 7EA8D3FF                
+011E D3A87E54                
+0122 2A                      
+0123 4552524F        166     ERR: DB 'ERROR',0     
+0127 5200                    
+                     167     END
+A51 MACRO ASSEMBLER  FREQUENCY                                                            03/19/2024 14:54:02 PAGE     4
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+ADC. . . . . . . .  D ADDR   00A0H   A   
+AGAIN_2. . . . . .  C ADDR   00A3H   A   
+C1 . . . . . . . .  B ADDR   0090H.0 A   
+C2 . . . . . . . .  B ADDR   0090H.1 A   
+C3 . . . . . . . .  B ADDR   0090H.2 A   
+C4 . . . . . . . .  B ADDR   0090H.3 A   
+CHECK_1. . . . . .  C ADDR   0022H   A   
+CHECK_2. . . . . .  C ADDR   0031H   A   
+CHECK_ROW. . . . .  C ADDR   003CH   A   
+DELAY. . . . . . .  C ADDR   00D6H   A   
+E. . . . . . . . .  B ADDR   00B0H.1 A   
+ERR. . . . . . . .  C ADDR   0123H   A   
+ERROR. . . . . . .  C ADDR   009DH   A   
+FIND . . . . . . .  C ADDR   0087H   A   
+FREQ . . . . . . .  C ADDR   000FH   A   
+H. . . . . . . . .  C ADDR   0017H   A   
+HERE . . . . . . .  C ADDR   0009H   A   
+HOO. . . . . . . .  C ADDR   00ADH   A   
+KEYPAD_PORT. . . .  D ADDR   0090H   A   
+LCD_COMMAND. . . .  C ADDR   00C0H   A   
+LCD_DATA . . . . .  C ADDR   00CBH   A   
+LCD_INIT . . . . .  C ADDR   00B3H   A   
+LCD_PORT . . . . .  D ADDR   0080H   A   
+LOOP . . . . . . .  C ADDR   0011H   A   
+LOOP1. . . . . . .  C ADDR   00DAH   A   
+LOOP2. . . . . . .  C ADDR   00D8H   A   
+MATCH. . . . . . .  C ADDR   0091H   A   
+P0 . . . . . . . .  D ADDR   0080H   A   
+P1 . . . . . . . .  D ADDR   0090H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+P3 . . . . . . . .  D ADDR   00B0H   A   
+PPO. . . . . . . .  C ADDR   009CH   A   
+READ_KEY . . . . .  C ADDR   0022H   A   
+RO1. . . . . . . .  B ADDR   0090H.7 A   
+RO2. . . . . . . .  B ADDR   0090H.6 A   
+RO3. . . . . . . .  B ADDR   0090H.5 A   
+RO4. . . . . . . .  B ADDR   0090H.4 A   
+ROW1 . . . . . . .  C ADDR   00DFH   A   
+ROW2 . . . . . . .  C ADDR   00E3H   A   
+ROW3 . . . . . . .  C ADDR   00E7H   A   
+ROW4 . . . . . . .  C ADDR   00EBH   A   
+ROW_1. . . . . . .  C ADDR   0073H   A   
+ROW_2. . . . . . .  C ADDR   0078H   A   
+ROW_3. . . . . . .  C ADDR   007DH   A   
+ROW_4. . . . . . .  C ADDR   0082H   A   
+RS . . . . . . . .  B ADDR   00B0H.0 A   
+SIN. . . . . . . .  C ADDR   00EFH   A   
+SQUARE . . . . . .  C ADDR   00FCH   A   
+STAIRS . . . . . .  C ADDR   0109H   A   
+TF0. . . . . . . .  B ADDR   0088H.5 A   
+TH0. . . . . . . .  D ADDR   008CH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR0. . . . . . . .  B ADDR   0088H.4 A   
+TRIANGLE . . . . .  C ADDR   0116H   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

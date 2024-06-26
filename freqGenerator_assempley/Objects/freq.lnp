@@ -1,0 +1,3 @@
+".\Objects\frequency.obj" 
+TO ".\Objects\freq" 
+PRINT(".\Listings\freq.m51")
